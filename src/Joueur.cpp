@@ -2,7 +2,6 @@
 #include "Partie.h"
 #include "Vue.h"
 
-#include <conio.h>
 #include <cctype>
 
 size_t IllustreArchitecte::choisirIndexTuile(const std::vector<TuilePtr>& chantier) const {
@@ -14,9 +13,9 @@ size_t IllustreArchitecte::choisirIndexTuile(const std::vector<TuilePtr>& chanti
                 best = i;
         }
     }
-    // Aucun Place -> prend la première
+    // Aucun Place -> prend la premiï¿½re
     if (best == (size_t)-1) return 0;
-    // Pas assez de pierres -> prend la première
+    // Pas assez de pierres -> prend la premiï¿½re
     if (best > pierres) return 0;
     return best;
 }

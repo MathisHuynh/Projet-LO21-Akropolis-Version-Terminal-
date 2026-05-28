@@ -1,5 +1,4 @@
 #include "Cite.h"
-#include <conio.h>
 #include <algorithm>
 
 const Coord Cite::adjacence[6]={

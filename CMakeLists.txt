@@ -9,7 +9,3 @@ include_directories(inc)
 file(GLOB SOURCES "src/*.cpp" "main.cpp")
 
 add_executable(Akropolis ${SOURCES})
-
-if(EMSCRIPTEN)
-    set_target_properties(Akropolis PROPERTIES SUFFIX ".html")
-endif()

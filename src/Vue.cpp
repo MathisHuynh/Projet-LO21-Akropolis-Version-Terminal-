@@ -1,11 +1,11 @@
 #include "Vue.h"
 #include "MenuTerminal.h"
 #include "Jeu.h"
-#include <windows.h>
-#include <conio.h>
+#include "Console.h"
+#include <iostream>
+#include <cmath>
 #include <cctype>
-
-
+#include <algorithm>
 
 void Vue::coup(Joueur& joueur, size_t choix, Coord pos) {
 	joueur.poserTuile(selectTuile(choix), pos);
@@ -17,52 +17,38 @@ void Vue::coup(Joueur& joueur, size_t choix, Coord pos) {
 //                                           VueTerminal
 //-----------------------------------------------------------------------------------------------
 
-
-
-//                                           Affichage
-//-----------------------------------------------------------------------------------------------
 void VueTerminal::afficher(const Cite& c, Coord pos) const{
 	int rayon{ 0 };
-	// Calcul du rayon
 	for (const auto& pair : c.getPlateau()) {
 		int x = pair.first.first;
 		int y = pair.first.second;
 		int r = std::ceil(std::sqrt(2 * x * x + 2 * y * y)) + 1;
 		if (r > rayon) rayon = r;
 	}
-	// --- AFFICHAGE EN DOUBLE LIGNE PAR HEXAGONE ---
 	for (int j = rayon; j >= -rayon; j--) {
-		// ----- LIGNE 1 : �toiles -----
 		if (j > 0) std::cout << std::string(std::abs(j)*2, ' ');
 		if (pos.first == -rayon && pos.second == j) std::cout << ">";
 		else std::cout << " ";
 
 		for (int i = -rayon; i <= rayon; i++) {
-
 			if (std::abs(j + i) <= rayon) {
-
 				Coord co{ i, j };
-
 				if (!c.caseVide(co)) {
 					const Case& cell = c.getPlateau().at(co);
-
-					// Affiche "N*" o� N = nombre d'�toiles
 					if (co == pos) std::cout << "\033[47m";
 					else std::cout << toFond(cell.h);
 					std::cout << *cell.hex;
 				}
 				else {
 					if (co == pos) std::cout << "\033[47m";
-					std::cout << ".."; // vide
+					std::cout << ".."; 
 					if (co == pos) std::cout << RESET;
 				}
 			}
-
 			if (Coord({ i + 1, j }) == pos) std::cout << " >";
 			else std::cout << "  ";
 		}
 		std::cout << "\n";
-		// ----- LIGNE 2 : ID -----
 		if (j > 0) std::cout << std::string(std::abs(j)*2, ' ');
 		std::cout << " ";
 		for (int i = -rayon; i <= rayon; i++) {
@@ -71,7 +57,6 @@ void VueTerminal::afficher(const Cite& c, Coord pos) const{
 				if (!c.caseVide(co)) {
 					const Case& cell = c.getPlateau().at(co);
 					int id = cell.id;
-					// ID sur 2 caract�res
 					if (co == pos) std::cout << "\033[47m";
 					else std::cout << toFond(cell.h);
 					std::cout << toColor(cell.hex->getCouleur());
@@ -91,10 +76,8 @@ void VueTerminal::afficher(const Cite& c, Coord pos) const{
 	}
 }
 
-
 void VueTerminal::afficher(const Cite& c, const std::map<Coord, const Hex*>& overlay, int rt) const{
 	int rayon{ 0 };
-	// Rayon sur le plateau principal
 	for (const auto& pair : c.getPlateau()) {
 		int x = pair.first.first;
 		int y = pair.first.second;
@@ -104,28 +87,22 @@ void VueTerminal::afficher(const Cite& c, const std::map<Coord, const Hex*>& ove
 	rayon += rt;
 
 	std::cout << "\nAffichage du plateau :\n\n";
-	// --- AFFICHAGE DOUBLE LIGNE PAR HEXAGONE ---
 	for (int j = rayon; j >= -rayon; j--) {
-		// -------- LIGNE 1 : �toiles --------
 		if (j > 0) std::cout << std::string(std::abs(j)*2, ' ');
 		for (int i = -rayon; i <= rayon; i++) {
 			if (std::abs(j + i) <= rayon) {
 				Coord co{ i, j };
 				const Hex* h = nullptr;
-				// Priorit� overlay
 				auto it = overlay.find(co);
 				if (it != overlay.end()) {
 					std::cout << "\033[48;5;255m";
 					h = it->second;
 				}
-				// Plateau standard sinon
 				else if (!c.caseVide(co)) {
 					h = c.getPlateau().at(co).hex;
 					std::cout << toFond(c.getPlateau().at(co).h);
 				}
 				if (h) {
-					// N*
-	
 					std::cout << *h;
 				}
 				else {
@@ -135,7 +112,6 @@ void VueTerminal::afficher(const Cite& c, const std::map<Coord, const Hex*>& ove
 			std::cout << "  ";
 		}
 		std::cout << "\n";
-		// -------- LIGNE 2 : ID --------
 		if (j > 0) std::cout << std::string(std::abs(j)*2, ' ');
 		for (int i = -rayon; i <= rayon; i++) {
 			if (std::abs(j + i) <= rayon) {
@@ -169,7 +145,6 @@ void VueTerminal::afficher(const Cite& c, const std::map<Coord, const Hex*>& ove
 	}
 }
 
-
 void VueTerminal::afficherChantier(const std::vector<TuilePtr>& c) const {
 	std::cout << "Nombre de piles restantes: " << partie->cartesRestantes()/(partie->getNbJoueurs()+1)<<"\n";
 	std::vector<std::vector<std::string>> tl;
@@ -179,7 +154,6 @@ void VueTerminal::afficherChantier(const std::vector<TuilePtr>& c) const {
 
 	int maxl=0;
 	std::vector<size_t> widths(tl.size(),0);
-	//Affichage premiere ligne
 	for (int i = 0; i < tl.size();i++) {
 		for (const auto& l : tl[i]) {
 			if (widths[i] < visibleLength(l)) widths[i] = visibleLength(l);
@@ -187,14 +161,11 @@ void VueTerminal::afficherChantier(const std::vector<TuilePtr>& c) const {
 		if (tl[i].size() > maxl) maxl = tl[i].size();
 
 		std::cout << "Cout: " << i;
-
 		size_t padding = 4;
 		if (widths[i] > 7) padding += widths[i] - 7;
-
 		std::cout << std::string(padding, ' ');
 	}
 	std::cout << "\n";
-	//On a un d�calage de 4 espaces entre les tuiles
 	for (int i = 0; i < maxl;i++) {
 		for (int j = 0; j < tl.size(); j++) {
 			size_t padding = 4;
@@ -203,7 +174,6 @@ void VueTerminal::afficherChantier(const std::vector<TuilePtr>& c) const {
 
 			if (i < tl[j].size()) std::cout << tl[j][i] << std::string(padding, ' ');
 			else std::cout << std::string(padding, ' ');
-
 		}
 		std::cout << "\n";
 	}
@@ -216,7 +186,6 @@ void VueTerminal::afficher(const std::vector<TuilePtr>& c) const{
 	}
 	int maxl = 0;
 	std::vector<size_t> widths(tl.size(), 0);
-	//Affichage premiere ligne
 	for (int i = 0; i < tl.size(); i++) {
 		for (const auto& l : tl[i]) {
 			if (widths[i] < visibleLength(l)) widths[i] = visibleLength(l);
@@ -225,7 +194,6 @@ void VueTerminal::afficher(const std::vector<TuilePtr>& c) const{
 		size_t padding = 4;
 		if (widths[i] > 7) padding += widths[i] - 7;
 	}
-	//On a un d�calage de 4 espaces entre les tuiles
 	for (int i = 0; i < maxl; i++) {
 		for (int j = 0; j < tl.size(); j++) {
 			size_t padding = 4;
@@ -234,7 +202,6 @@ void VueTerminal::afficher(const std::vector<TuilePtr>& c) const{
 
 			if (i < tl[j].size()) std::cout << tl[j][i] << std::string(padding, ' ');
 			else std::cout << std::string(padding, ' ');
-
 		}
 		std::cout << "\n";
 	}
@@ -249,7 +216,6 @@ void VueTerminal::afficherChantier(const std::vector<TuilePtr>& c, size_t index,
 	}
 	int maxl = 0;
 	std::vector<size_t> widths(tl.size(), 0);
-	//Affichage premiere ligne
 	for (int i = 0; i < tl.size(); i++) {
 		for (const auto& l : tl[i]) {
 			if (widths[i] < visibleLength(l)) widths[i] = visibleLength(l);
@@ -257,39 +223,31 @@ void VueTerminal::afficherChantier(const std::vector<TuilePtr>& c, size_t index,
 		if (tl[i].size() > maxl) maxl = tl[i].size();
 
 		std::cout << "Cout: " << i;
-
 		size_t padding = 4;
 		if (widths[i] > 7) padding += widths[i] - 7;
-
 		std::cout << std::string(padding, ' ');
 	}
 	std::cout << "\n";
-	//On a un d�calage de 4 espaces entre les tuiles
 	for (int i = 0; i < maxl; i++) {
 		for (int j = 0; j < tl.size(); j++) {
-
 			size_t padding = 4;
 			if (widths[j] < 7) padding += 7 - visibleLength(tl[j][i]);
 			else if (i < tl[j].size()) padding += widths[j] - visibleLength(tl[j][i]);
 
 			if (i < tl[j].size()) std::cout << tl[j][i] << std::string(padding, ' ');
 			else std::cout << std::string(padding, ' ');
-
 		}
 		std::cout << "\n";
 	}
 }
-
 
 void VueTerminal::afficherIllustreArchitecte(const IllustreArchitecte& j) const{
 	clearScreen();
 	std::cout << "Tuiles de l'illustre architecte:\n";
 	afficher(j.getTuiles());
 	std::cout << "\n Appuyez sur entree pour continuer";
-	int c = _getch();
-	while (c != ENTREE) c = _getch();
+	entreeAttendue({ ENTREE });
 }
-
 
 void VueTerminal::afficherInfos(const JoueurHumain& joueur) const {
 	std::cout << "\r";
@@ -299,7 +257,6 @@ void VueTerminal::afficherInfos(const JoueurHumain& joueur) const {
 	std::cout << "\n\n Pierres: " << joueur.getPierres();
 }
 
-
 //-----------------------------------------------------------------------------------------------
 //                                         Tour
 //-----------------------------------------------------------------------------------------------
@@ -308,14 +265,11 @@ size_t VueTerminal::choixTuile(const JoueurHumain& joueur) const {
 	size_t choix;
 	while (true) {
 		clearScreen();
-
 		afficherInfos(joueur);
-
 		std::cout << "\n Chantier:\n";
 		afficherChantier(partie->getChantierRead());
 		std::cout << "\n Cite: \n";
 		afficher(joueur.getCite());
-
 		std::cout << "\nChoix de la tuile: ";
 
 		std::string entree;
@@ -326,19 +280,10 @@ size_t VueTerminal::choixTuile(const JoueurHumain& joueur) const {
 			if (choix <= joueur.getPierres()) return choix;
 			clearScreen();
 			std::cout << "Pas assez de pierres, appuyez sur Entree pour continuer";
-			int c = _getch();
-			while (c != ENTREE) c = _getch();
+			entreeAttendue({ ENTREE });
 		}
-
-
-		//IMPLEMENTER LA SAUVEGARDE SUR ECHAP AVEC CONFIRMATION
-		//auto entreeR = lireTexteAvecEchap();
-		//if (!entreeR) return -1;
-		//std::string entree = *entreeR;
-		//IMPLEMENTER LA SAUVEGARDE SUR ECHAP AVEC CONFIRMATION
 	}
 }
-
 
 bool VueTerminal::choixPivot(const JoueurHumain& joueur, size_t index, Coord& pivot) {
 	Coord save = pivot;
@@ -351,31 +296,26 @@ bool VueTerminal::choixPivot(const JoueurHumain& joueur, size_t index, Coord& pi
 		std::cout << "\n Cite: \n";
 		afficher(joueur.getCite());
 
-		std::cout << "\n Choisissez le pivot a l'aide des fleches (Entree pour valider, Echap pour annuler): (" << pivot.first << " , " << pivot.second << ") ";
+		std::cout << "\n Deplacez le pivot [z=Haut, s=Bas, q=Gauche, d=Droite, e=Valider, a=Annuler]: (" << pivot.first << " , " << pivot.second << ") ";
 
-		int c = 0;
-
-		c = _getch();
-		if (c == 224) {
-			c = _getch();
-			if (c == KEY_LEFT) {
-				if (t.find({ pivot.first - 1,pivot.second }) != t.end()) --pivot.first;
-			}
-			else if (c == KEY_RIGHT) {
-				if (t.find({ pivot.first + 1,pivot.second }) != t.end()) ++pivot.first;
-			}
-			else if (c == KEY_UP) {
-				if (t.find({ pivot.first,pivot.second + 1 }) != t.end()) ++pivot.second;
-			}
-			else if (c == KEY_DOWN) {
-				if (t.find({ pivot.first,pivot.second - 1 }) != t.end())  --pivot.second;
-			}
+		char c = entreeAttendue({'z', 's', 'q', 'd', 'e', 'a', ECHAP, ENTREE});
+		if (c == 'q') {
+			if (t.find({ pivot.first - 1,pivot.second }) != t.end()) --pivot.first;
 		}
-		else if (c == ENTREE) {
+		else if (c == 'd') {
+			if (t.find({ pivot.first + 1,pivot.second }) != t.end()) ++pivot.first;
+		}
+		else if (c == 'z') {
+			if (t.find({ pivot.first,pivot.second + 1 }) != t.end()) ++pivot.second;
+		}
+		else if (c == 's') {
+			if (t.find({ pivot.first,pivot.second - 1 }) != t.end())  --pivot.second;
+		}
+		else if (c == 'e' || c == ENTREE) {
 			setCentre(index, pivot);
 			return true;
 		}
-		else if (c == ECHAP) {
+		else if (c == 'a' || c == ECHAP) {
 			pivot = save;
 			setCentre(index, pivot);
 			return false;
@@ -394,35 +334,30 @@ bool VueTerminal::choixCase(const JoueurHumain& joueur, Coord& pos, size_t index
 		std::cout << "\n Cite: \n";
 		afficher(joueur.getCite(), pos);
 
-		std::cout << "\n Choisissez l'emplacement a l'aide des fleches (Entree pour valider, Echap pour annuler): (" << pos.first << " , " << pos.second << ") ";
+		std::cout << "\n Deplacez l'emplacement [z=Haut, s=Bas, q=Gauche, d=Droite, e=Valider, a=Annuler]: (" << pos.first << " , " << pos.second << ") ";
 
-		int c = 0;
-
-		c = _getch();
-		if (c == 224) {
-			c = _getch();
-			if (c == KEY_LEFT) {
-				if (cite.caseAdjacente({ pos.first - 1 , pos.second })) --pos.first;
-			}
-			else if (c == KEY_RIGHT) {
-				if (cite.caseAdjacente({ pos.first + 1 , pos.second })) ++pos.first;
-			}
-			else if (c == KEY_UP) {
-				if (cite.caseAdjacente({ pos.first , pos.second + 1 })) ++pos.second;
-			}
-			else if (c == KEY_DOWN) {
-				if (cite.caseAdjacente({ pos.first , pos.second - 1 }))  --pos.second;
-			}
+		char c = entreeAttendue({'z', 's', 'q', 'd', 'e', 'a', ECHAP, ENTREE});
+		if (c == 'q') {
+			if (cite.caseAdjacente({ pos.first - 1 , pos.second })) --pos.first;
 		}
-		else if (c == ENTREE && cite.placementPossible(partie->getChantier()[index], pos)) return true;
-		else if (c == ECHAP) {
-			pivot = save;
+		else if (c == 'd') {
+			if (cite.caseAdjacente({ pos.first + 1 , pos.second })) ++pos.first;
+		}
+		else if (c == 'z') {
+			if (cite.caseAdjacente({ pos.first , pos.second + 1 })) ++pos.second;
+		}
+		else if (c == 's') {
+			if (cite.caseAdjacente({ pos.first , pos.second - 1 }))  --pos.second;
+		}
+		else if ((c == 'e' || c == ENTREE) && cite.placementPossible(partie->getChantier()[index], pos)) {
+			return true;
+		}
+		else if (c == 'a' || c == ECHAP) {
+			pos = save;
 			return false;
 		}
 	}
 }
-
-
 
 bool VueTerminal::choixRotation(const JoueurHumain& joueur, Coord pos, size_t index, Coord pivot) {
 	const Cite& cite = joueur.getCite();
@@ -434,43 +369,31 @@ bool VueTerminal::choixRotation(const JoueurHumain& joueur, Coord pos, size_t in
 		std::cout << "\n Cite: \n";
 		afficher(cite, partie->getChantierRead()[index]->getCoordPlateau(pos), partie->getChantierRead()[index]->rayon());
 
-		std::cout << "\n Choisissez la rotation a l'aide des fleches (Entree pour valider, Echap pour annuler)";
+		std::cout << "\n Choisissez la rotation [q=Gauche, d=Droite, e=Valider, a=Annuler]";
 
-		int c = 0;
-
-		c = _getch();
-		if (c == 224) {
-			c = _getch();
-			if (c == KEY_LEFT) {
-				partie->getChantier()[index]->rotation(true);
-				while (!cite.coupLegal(partie->getChantierRead()[index], pos)) partie->getChantier()[index]->rotation(true);
-			}
-			else if (c == KEY_RIGHT) {
-				partie->getChantier()[index]->rotation(false);
-				while (!cite.coupLegal(partie->getChantierRead()[index], pos)) partie->getChantier()[index]->rotation(false);
-			}
+		char c = entreeAttendue({'q', 'd', 'e', 'a', ECHAP, ENTREE});
+		if (c == 'q') {
+			partie->getChantier()[index]->rotation(true);
+			while (!cite.coupLegal(partie->getChantierRead()[index], pos)) partie->getChantier()[index]->rotation(true);
 		}
-		else if (c == ENTREE) return true;
-		else if (c == ECHAP) return false;
+		else if (c == 'd') {
+			partie->getChantier()[index]->rotation(false);
+			while (!cite.coupLegal(partie->getChantierRead()[index], pos)) partie->getChantier()[index]->rotation(false);
+		}
+		else if (c == 'e' || c == ENTREE) return true;
+		else if (c == 'a' || c == ECHAP) return false;
 	}
 }
-
-
 
 void VueTerminal::jouer() {
 	while (!partie->piocheVide()) {
 		clearScreen();
 		std::cout << "\n Tour " << partie->tour << "\nAppuyez sur Entree pour continuer";
-
-		int c = _getch();
-		while (c != ENTREE) c = _getch();
+		entreeAttendue({ ENTREE });
 		partie->jouerTour(*this);
-		//tour = tour + 1;
 	}
-
 	std::cout << "\nFin de la partie\n";
 }
-
 
 void VueTerminal::tour(JoueurHumain& joueur) {
 	bool played = false;
@@ -480,24 +403,17 @@ void VueTerminal::tour(JoueurHumain& joueur) {
 	while (!played) {
 		size_t choix = choixTuile(joueur);
 
-		Coord pivot;
 		if (!choixPivot(joueur, choix, pivot)) continue;
-
-		Coord pos;
 		if (!choixCase(joueur, pos, choix, pivot)) continue;
-
-		int rot;
 		if (!choixRotation(joueur, pos, choix, pivot)) continue;
+		
 		played = true;
-
 		coup(joueur, choix, pos);
 	}
 
 	clearScreen();
 	std::cout << "Tuile posee avec succes!\nAppuyez sur Entree pour continuer";
-
-	int c = _getch();
-	while (c != 13) c = _getch();
+	entreeAttendue({ ENTREE });
 }
 
 //-----------------------------------------------------------------------------------------------
@@ -509,7 +425,7 @@ std::vector<JoueurPtr> VueTerminal::creerJoueurs(const std::string& couleur, con
 	std::vector<JoueurPtr> joueurs;
 
 	MenuChamps menuJ = MenuChamps("JOUEURS","AKROPOLIS");
-	menuJ.ajouterOption({ "Entrez le nombre de joueurs" }); //num�rique par d�faut
+	menuJ.ajouterOption({ "Entrez le nombre de joueurs" }); 
 	while (nbJoueurs > 4) {
 		std::vector<std::string> entrees = menuJ.loop();
 		if (entrees.empty()) return{};
@@ -527,7 +443,6 @@ std::vector<JoueurPtr> VueTerminal::creerJoueurs(const std::string& couleur, con
 	}
 
 	std::vector<std::string> noms = menuN.loop();
-	/*if (noms.empty()) return{};*/
 	size_t i{ 1 };
 	for (const auto& nom : noms) {
 		joueurs.emplace_back(JoueurPtr(new JoueurHumain(nom, i)));
@@ -540,11 +455,11 @@ std::vector<JoueurPtr> VueTerminal::creerJoueurs(const std::string& couleur, con
 		menuD.ajouterOption({ "Metagenes" });
 		menuD.ajouterOption({ "Callicrates" });
 		size_t choix = menuD.loop();
-		NiveauDifficulte d;
+		NiveauDifficulte d = NiveauDifficulte::Hippodamos;
 		switch (choix) {
-		case 1: d = NiveauDifficulte::Hippodamos;
-		case 2: d = NiveauDifficulte::Metagenes;
-		case 3: d = NiveauDifficulte::Callicrates;
+		case 1: d = NiveauDifficulte::Hippodamos; break;
+		case 2: d = NiveauDifficulte::Metagenes; break;
+		case 3: d = NiveauDifficulte::Callicrates; break;
 		}
 		joueurs.emplace_back(JoueurPtr(new IllustreArchitecte(d)));
 	}
@@ -561,7 +476,6 @@ std::vector<ReglePtr> VueTerminal::creerRegles(const std::string& couleur, const
 	std::vector<ReglePtr> regles;
 	for (const auto& c : Couleurs) {
 		if (c == Couleur::blanc) continue;
-		char entree = 0;
 		size_t choix = 1;
 
 		MenuRestreint menuR = MenuRestreint("SELECTION DES REGLES :"+toString(c), "AKROPOLIS");
@@ -569,10 +483,8 @@ std::vector<ReglePtr> VueTerminal::creerRegles(const std::string& couleur, const
 		menuR.ajouterOption({ "Variante" });
 		choix = menuR.loop();
 		switch (choix) {
-		case 1: regles.emplace_back(RegleFactory::creer(c, false));
-			break;
-		case 2: regles.emplace_back(RegleFactory::creer(c, true));
-			break;
+		case 1: regles.emplace_back(RegleFactory::creer(c, false)); break;
+		case 2: regles.emplace_back(RegleFactory::creer(c, true)); break;
 		default: return{};
 		}
 	}
@@ -581,24 +493,19 @@ std::vector<ReglePtr> VueTerminal::creerRegles(const std::string& couleur, const
 
 VueTerminal::VueTerminal(const std::string& couleur, const std::string& contraste){
 	std::vector<JoueurPtr> x = creerJoueurs(couleur,contraste);
-
 	if (x.empty()) return;
 
 	std::vector<ReglePtr> y = creerRegles(couleur,contraste);
-
 	if (y.empty()) return;
 
 	bool longue = false;
 	if (x.size() < 4) {
-
 		MenuRestreint menuL = MenuRestreint("MODE LONG", "AKROPOLIS");
 		menuL.ajouterOption({ "Oui" });
 		menuL.ajouterOption({"Non"});
 		switch (menuL.loop()) {
-		case 1: longue = true;
-			break;
-		case 2: longue = false;
-			break;
+		case 1: longue = true; break;
+		case 2: longue = false; break;
 		default: return;
 		}
 	}
@@ -607,18 +514,13 @@ VueTerminal::VueTerminal(const std::string& couleur, const std::string& contrast
 	jouer();
 }
 
-//-----------------------------------------------------------------------------------------------
-//                                           FIN VueTerminal
-//-----------------------------------------------------------------------------------------------
-
-
 // -------------------------------------------------------------------------------------------------
-//												MENU
+//												MENU PRINCIPAL
 // -------------------------------------------------------------------------------------------------
 
 void header(const std::string& couleur) {
 	std::cout << "\n";
-	afficherCentre("++======================================================++",couleur);//58 largeur
+	afficherCentre("++======================================================++",couleur);
 	afficherCentre("||                                                      ||",couleur);
 	afficherCentre("||                AKROPOLIS VERSION TERMINAL            ||", couleur);
 	afficherCentre("||                                                      ||",couleur);
@@ -627,7 +529,6 @@ void header(const std::string& couleur) {
 }
 
 void menuPrincipalTerminal(const std::string& couleur, const std::string& contraste) {
-	char entree = 0;
 	size_t choix = 1;
 	MenuRestreint menuprincipal = MenuRestreint("MENU PRINCIPAL", "AKROPOLIS VERSION TERMINAL");
 	menuprincipal.ajouterOption({ "Nouvelle Partie" });
@@ -637,11 +538,9 @@ void menuPrincipalTerminal(const std::string& couleur, const std::string& contra
 	while (choix != 4) {
 		choix = menuprincipal.loop();
 		switch (choix) {
-		case 1: nouvellePartie();
-			break;
+		case 1: nouvellePartie(); break;
 		case 2: break;
-		case 3: explications();
-			break;
+		case 3: explications(); break;
 		case 4: return;
 		}
 	}
@@ -650,34 +549,21 @@ void menuPrincipalTerminal(const std::string& couleur, const std::string& contra
 void explications(const std::string& couleur) {
 	clearScreen();
 	header(couleur);
-
-	//TEXTE
 	std::cout << "\n";
-	afficherCentre("Appuyez sur Echap pour revenir au menu principal",couleur);
-
-	entreeAttendue({ECHAP});
+	afficherCentre("Appuyez sur Echap (ou tapez 'a') pour revenir au menu principal",couleur);
+	entreeAttendue({ECHAP, 'a'});
 }
-
 
 void nouvellePartie(const std::string& couleur,const std::string& contraste) {
 	VueTerminal p(couleur,contraste);
 }
 
 //-----------------------------------------------------------------------------------------------
-//                                           FIN Menu
-//-----------------------------------------------------------------------------------------------
-
-
-//-----------------------------------------------------------------------------------------------
 //                                           UTILITAIRE
 //-----------------------------------------------------------------------------------------------
 
-
-
 int largeurConsole() {
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
-	return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    return Console::getWidth();
 }
 
 void afficherCentre(const std::string& text, const std::string& couleur) {
@@ -689,8 +575,7 @@ void afficherCentre(const std::string& text, const std::string& couleur) {
 }
 
 void setCursorPosition(int x, int y) {
-	COORD pos = { (SHORT)x, (SHORT)y };
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+    Console::setCursor(x, y);
 }
 
 int afficherCentreAvecCurseur(const std::string& text, char stopAt, const std::string& couleur) {
@@ -700,23 +585,16 @@ int afficherCentreAvecCurseur(const std::string& text, char stopAt, const std::s
 
 	std::cout << std::string(padding, ' ') << couleur << text << "\n";
 
-	// Trouver la position du caract�re o� placer le curseur
 	int relativePos = text.find(stopAt);
 	if (relativePos == std::string::npos)
 		return -1;
 
-	// Position console = marge + position dans le texte
 	return padding + relativePos + 1; 
 }
 
-
 char entreeAttendue(std::vector<char> list) {
-	char c = _getch();
-	while (std::find(list.begin(),list.end(),c)==list.end()) c = _getch();
-	return c;
+    return Console::readKeyFromList(list);
 }
-
-
 
 bool entreeNumerique(std::string entree, int max, int min) {
 	bool valide = false;
@@ -747,70 +625,13 @@ bool entreeNumerique(std::string entree, int max, int min) {
 }
 
 std::optional<std::string> lireNombreAvecEchap(size_t max) {
-	std::string entree;
-	while (true) {
-		char c = _getch();
-
-		if (c == ECHAP) {  // ESC
-			return std::nullopt;
-		}
-		else if (c == ENTREE && !entree.empty()) {  // Entree
-			std::cout << '\n';
-			return entree;
-		}
-		else if (c == '\b') {  // Backspace
-			if (!entree.empty()) {
-				entree.pop_back();
-				std::cout << "\b \b";
-			}
-		}
-		else if (c != ENTREE && std::isdigit(c) && entree.size() < max) {
-			entree.push_back(c);
-			std::cout << c;
-		}
-	}
+    return Console::readLineWithEscape(max, true);
 }
 
-
 std::optional<std::string> lireTexteAvecEchap(size_t max) {
-	std::string entree;
-	while (true) {
-		char c = _getch();
-
-		if (c == ECHAP) {  // ESC
-			return std::nullopt;
-		}
-		else if (c == ENTREE && !entree.empty()) {  // Entree
-			std::cout << '\n';
-			return entree;
-		}
-		else if (c == '\b') {  // Backspace
-			if (!entree.empty()) {
-				entree.pop_back();
-				std::cout << "\b \b";
-			}
-		}
-		else if (c!=ENTREE && entree.size()<max) {
-			entree.push_back(c);
-			std::cout << c;
-		}
-	}
+    return Console::readLineWithEscape(max, false);
 }
 
 size_t visibleLength(const std::string& s) {
-	size_t len = 0;
-	for (size_t i = 0; i < s.size(); ) {
-		if (s[i] == '\x1b' && i + 1 < s.size() && s[i + 1] == '[') {
-			// on est dans une s�quence d'�chappement CSI : \x1b[ ... jusqu'� 'm'
-			i += 2; // skip \x1b[
-			while (i < s.size() && s[i] != 'm') ++i;
-			if (i < s.size()) ++i; // skip final 'm'
-		}
-		else {
-			++len;
-			++i;
-		}
-	}
-	return len;
+    return visible(s);
 }
-
