@@ -1,6 +1,7 @@
 #include "Vue.h"
 #include "MenuTerminal.h"
 #include "Jeu.h"
+#include <windows.h>
 #include <conio.h>
 #include <cctype>
 

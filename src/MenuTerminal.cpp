@@ -1,4 +1,5 @@
 #include "MenuTerminal.h"
+#include <windows.h>
 
 void clearScreen(){
     std::cout << "\033[2J\033[1;1H" << std::flush;
