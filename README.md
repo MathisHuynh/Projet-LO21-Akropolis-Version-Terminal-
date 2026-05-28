@@ -39,6 +39,8 @@ Le projet a été conçu en grande partie sur Visual Studio et a été compilé 
 
 Il est donc préférable d'installer CMake: https://cmake.org/download/
 
+Ainsi que mingw-w64 GCC: https://www.msys2.org/
+
 Commande de compilation Windows:
 ```
 mkdir build; cd build
