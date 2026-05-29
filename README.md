@@ -54,6 +54,7 @@ Le projet utilise **CMake** comme système de génération de fichiers de build 
 * Un compilateur C++ compatible (ex: **GCC / g++**)
 * **CMake** (version 3.10 ou supérieure recommandée)
 * *Pour Windows :* L'environnement **MSYS2 (mingw-w64)** installé et configuré dans le PATH.
+* *Pour compiler en Javascript :* Le SDK **Emscripten (emsdk)** installé, activé et chargé dans l'environnement.
 
 ### Commandes de Compilation
 
@@ -69,5 +70,13 @@ cmake --build .
 mkdir build
 cd build
 cmake ..
+cmake --build .
+```
+
+#### Javascript (Web)
+```bash
+mkdir build-web
+cd build-web
+emcmake cmake -G "MinGW Makefiles" ..
 cmake --build .
 ```
