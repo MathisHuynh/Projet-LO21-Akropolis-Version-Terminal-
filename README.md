@@ -10,7 +10,7 @@
 
 Ce projet a été réalisé dans le cadre de l'unité d'enseignement **LO21 - Programmation et Conception Orientées Objets** à l'**Université de Technologie de Compiègne (UTC)**.
 
-Ce dépôt héberge l'architecture du **Moteur de Jeu** ainsi que son interface en ligne de commande (**Terminal**), entièrement conçus et programmés par ***Mathis HUYNH***.
+Ce dépôt héberge l'architecture du **Moteur de Jeu** ainsi que son interface en ligne de commande (**Terminal**), entièrement conçus et programmés par ***Mathis HUYNH***, les modules Vue GUI (***Mathis HUYNH & Chloé LAMEZEC***) et la sauvegarde en serialization JS (***Chloé LAMEZEC***) sont dans les fichiers sources mais ne sont pas implémentés dans cette version.
 
 ---
 
